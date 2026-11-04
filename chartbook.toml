@@ -23,9 +23,10 @@ description = "From settlement prices to the simple variance swap rate, the risk
 path = "_output/02_svix_and_crash_probability_ipynb.ipynb"
 
 
-# TODO: Register the monitor notebook, `03_daily_monitor_ipynb`, following
-# the two entries above: a name, a description, and the path of the executed
-# notebook that `doit` leaves in `_output/`.
+[notebooks.03_daily_monitor_ipynb]
+name = "The Daily Monitor"
+description = "The replication run every morning by GitHub Actions: the history of SVIX and the crash probabilities, the workflow that pulls the latest session, appends its row, and publishes the page, and why the history lives on a branch of its own."
+path = "_output/03_daily_monitor_ipynb.ipynb"
 
 
 [notebooks.04_single_name_crash_bounds_ipynb]
@@ -53,13 +54,37 @@ window in the settings again when it changes; `doit latest` pulls the most
 recent session."""
 
 
-# TODO: Register the monitor's history as `[dataframes.svix_monitor_history]`,
-# following the entry above. It is the CSV in `_output/` that
-# `src/monitor.py` writes, and that the deploy workflow keeps on the
-# `monitor-history` branch. Document it: a name, a description, the path,
-# which column holds the date (`date_col`), how it is produced, and what a
-# reader needs to know (`docs`). The chart below refers to this entry by
-# name, so the site does not build until it exists.
+[dataframes.svix_monitor_history]
+name = "SVIX Monitor History"
+description = "One row per session: the 30-day SVIX next to the VIX, and the risk-neutral, log-investor, and power-utility probabilities of a 20% (and 10%) drop in the S&P 500 by the expiration closest to one month"
+path = "_output/svix_monitor_history.csv"
+date_col = "date"
+tags = ["Options", "Volatility", "Monitor"]
+pull_method = "Computed by src/monitor.py from the Databento settlements and FRED; `doit` adds the sessions in the window in the settings, `doit latest` the most recent one"
+docs = """One row per CME Globex session, oldest first, computed by
+`src/monitor.py` from that session's E-mini S&P 500 option settlements and
+the one-month Treasury yield (DGS1MO) from FRED. SVIX is Martin's (2017)
+simple variance swap rate at a constant 30-day horizon: total variance is
+interpolated linearly in time between the two end-of-month expirations that
+bracket 30 days. The crash probabilities are read off the risk-neutral
+distribution of the expiration closest to one month (`days_used`).
+
+Columns: `date`; `near_expiry`, `far_expiry`, `days_near`, `days_far` (the
+two bracketing expirations); `forward_near` (the parity-implied price of the
+underlying future); `rate` (DGS1MO, decimal); `svix2_near`, `svix2_far`,
+`svix2_30` (SVIX squared, annualized); `svix_30` (the 30-day index, in VIX
+units); `days_used`; `p_star_20`, `p_log_20`, `p_power_20` (the
+risk-neutral, log-investor, and power-utility with gamma = 2 probabilities
+of a 20% drop, as fractions, not percent); `p_star_10`, `p_log_10` (the same
+for a 10% drop); `vix` (the Cboe VIX close from FRED).
+
+The default `doit` adds every session in the pull window that the history
+does not have; `doit latest` adds the most recent one. A session already in
+the file is replaced by its new row, so running either twice is harmless.
+FRED posts the VIX close the next morning, so the newest row's `vix` can be
+blank until a later run fills it in. On the live monitor, the deploy
+workflow keeps this file on the `monitor-history` branch between runs, one
+small commit a day."""
 
 
 [charts]
